@@ -1,0 +1,554 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+#game{font-family:'Noto Sans JP',sans-serif;background:#0a0e1a;color:#e8eaf6;min-height:600px;border-radius:16px;overflow:hidden;position:relative}
+.screen{display:none;flex-direction:column;min-height:600px}
+.screen.active{display:flex}
+#hud{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:#111827;border-bottom:1px solid #1e3a5f}
+.hud-left{display:flex;align-items:center;gap:10px}
+.logo{font-size:13px;font-weight:700;color:#60a5fa;letter-spacing:.05em}
+.phase-badge{font-size:11px;background:#1e3a5f;color:#93c5fd;padding:3px 10px;border-radius:20px}
+.hud-right{display:flex;align-items:center;gap:16px}
+.budget-box{text-align:right}
+.budget-label{font-size:10px;color:#6b7280;display:block}
+.budget-val{font-size:22px;font-weight:700;color:#34d399;transition:color .3s}
+.budget-val.warn{color:#fbbf24}
+.budget-val.danger{color:#f87171}
+.pt-box{text-align:right}
+.pt-label{font-size:10px;color:#6b7280;display:block}
+.pt-val{font-size:16px;font-weight:700;color:#a78bfa}
+#s-title{background:linear-gradient(160deg,#0a0e1a 0%,#0f1f3d 100%);justify-content:center;align-items:center;text-align:center;padding:40px 24px}
+.title-eyebrow{font-size:12px;letter-spacing:.15em;color:#60a5fa;margin-bottom:16px}
+.title-main{font-size:34px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:8px}
+.title-sub{font-size:14px;color:#6b7280;margin-bottom:36px}
+.title-rule{background:#111827;border:1px solid #1e3a5f;border-radius:12px;padding:20px 28px;margin-bottom:36px;text-align:left;max-width:420px}
+.title-rule h3{font-size:12px;color:#60a5fa;margin-bottom:12px;letter-spacing:.08em}
+.rule-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:13px;color:#d1d5db}
+.rule-icon{width:28px;height:28px;border-radius:6px;background:#1e3a5f;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.btn-primary{background:#2563eb;color:#fff;border:none;padding:14px 40px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s}
+.btn-primary:hover{background:#1d4ed8}
+.progress-bar{display:flex;gap:4px;padding:8px 24px;background:#0a0e1a}
+.prog-step{flex:1;height:5px;border-radius:3px;background:#1e3a5f;transition:background .3s}
+.prog-step.done{background:#34d399}
+.prog-step.active{background:#60a5fa}
+.mission-header{padding:18px 24px 0}
+.mission-tag{font-size:11px;color:#60a5fa;letter-spacing:.08em;margin-bottom:6px}
+.mission-title{font-size:20px;font-weight:700;color:#fff;margin-bottom:4px}
+.mission-desc{font-size:12px;color:#6b7280}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px;padding:12px 24px}
+.item-card{background:#111827;border:1px solid #1e3a5f;border-radius:12px;padding:12px;cursor:pointer;transition:border-color .15s,background .15s;text-align:center}
+.item-card:hover{border-color:#2563eb;background:#0f1f3d}
+.item-card.selected{border-color:#34d399;background:#052e16}
+.item-card.disabled{opacity:.4;cursor:not-allowed}
+.item-emoji{font-size:26px;margin-bottom:6px}
+.item-name{font-size:11px;color:#d1d5db;margin-bottom:5px;line-height:1.4}
+.item-price{font-size:15px;font-weight:700;color:#fbbf24}
+.item-over{font-size:10px;color:#f87171;margin-top:3px}
+.cart-area{margin:0 24px 10px;background:#111827;border:1px solid #1e3a5f;border-radius:12px;padding:12px}
+.cart-title{font-size:11px;color:#6b7280;margin-bottom:8px;letter-spacing:.06em}
+.cart-row{display:flex;justify-content:space-between;font-size:13px;color:#d1d5db;margin-bottom:5px}
+.cart-total-row{display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#fff;border-top:1px solid #1e3a5f;padding-top:8px;margin-top:5px}
+.remaining{font-size:12px;color:#34d399;text-align:right;margin-top:4px}
+.remaining.warn{color:#fbbf24}
+.remaining.danger{color:#f87171}
+.action-bar{padding:0 24px 16px;display:flex;gap:10px;justify-content:flex-end;margin-top:auto}
+.btn-action{background:#2563eb;color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s}
+.btn-action:hover{background:#1d4ed8}
+.btn-action:disabled{opacity:.4;cursor:not-allowed}
+.btn-skip{background:transparent;color:#6b7280;border:1px solid #374151;padding:12px 20px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit}
+.btn-skip:hover{color:#d1d5db;border-color:#6b7280}
+.event-screen{justify-content:center;align-items:center;padding:24px}
+.event-card{background:#111827;border:2px solid #f59e0b;border-radius:16px;padding:28px;max-width:520px;width:100%;text-align:center}
+.event-alert{font-size:11px;color:#f59e0b;letter-spacing:.1em;margin-bottom:12px}
+.event-title{font-size:22px;font-weight:700;color:#fff;margin-bottom:8px}
+.event-msg{font-size:13px;color:#9ca3af;margin-bottom:24px;line-height:1.7}
+.event-budget{font-size:13px;color:#34d399;margin-bottom:20px}
+.choice-grid{display:grid;gap:10px}
+.choice-btn{background:#0f1f3d;border:1px solid #1e3a5f;border-radius:10px;padding:14px 20px;cursor:pointer;font-family:inherit;text-align:left;transition:border-color .15s}
+.choice-btn:hover{border-color:#60a5fa;background:#0a1628}
+.choice-label{font-size:14px;font-weight:500;color:#e8eaf6;margin-bottom:3px}
+.choice-effect{font-size:11px;color:#6b7280}
+.feedback-bar{background:#052e16;border:1px solid #065f46;border-radius:8px;margin:0 24px 10px;padding:10px 14px;font-size:13px;color:#34d399;line-height:1.6;display:none}
+.feedback-bar.show{display:block}
+.feedback-bar.event-fb{background:#1c1400;border-color:#78350f;color:#fbbf24}
+#s-result{padding:24px;justify-content:center;align-items:center;text-align:center;overflow-y:auto}
+.result-inner{max-width:480px;width:100%}
+.result-eyebrow{font-size:11px;color:#60a5fa;letter-spacing:.1em;margin-bottom:12px}
+.result-title{font-size:28px;font-weight:700;color:#fff;margin-bottom:20px}
+.score-box{background:#111827;border:1px solid #1e3a5f;border-radius:14px;padding:20px;margin-bottom:16px}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.score-item{text-align:center}
+.score-label{font-size:11px;color:#6b7280;margin-bottom:4px}
+.score-num{font-size:26px;font-weight:700}
+.score-green{color:#34d399}
+.score-purple{color:#a78bfa}
+.grade-area{border-top:1px solid #1e3a5f;padding-top:14px}
+.grade-letter{font-size:48px;font-weight:700;margin-bottom:4px}
+.grade-msg{font-size:13px;color:#9ca3af;line-height:1.6}
+.choices-log{background:#0f1f3d;border-radius:10px;padding:14px;margin-bottom:14px;text-align:left}
+.choices-log h4{font-size:11px;color:#6b7280;margin-bottom:10px;letter-spacing:.06em}
+.log-row{display:flex;justify-content:space-between;font-size:12px;color:#d1d5db;margin-bottom:5px}
+.log-row span:last-child{color:#fbbf24}
+.think-box{background:#1c1400;border:1px solid #78350f;border-radius:10px;padding:14px;margin-bottom:18px;text-align:left}
+.think-title{font-size:11px;color:#f59e0b;margin-bottom:8px;letter-spacing:.06em}
+.think-text{font-size:13px;color:#fde68a;line-height:1.7}
+#s-password{background:linear-gradient(160deg,#0a0e1a 0%,#0f1f3d 100%);justify-content:center;align-items:center;text-align:center;padding:40px 24px}
+.pw-card{background:#111827;border:1px solid #1e3a5f;border-radius:16px;padding:32px 28px;max-width:380px;width:100%}
+.pw-lock{font-size:40px;margin-bottom:12px}
+.pw-title{font-size:18px;font-weight:700;color:#fff;margin-bottom:6px}
+.pw-desc{font-size:13px;color:#6b7280;margin-bottom:24px;line-height:1.6}
+.pw-input{width:100%;background:#0a0e1a;border:2px solid #1e3a5f;border-radius:8px;padding:12px 16px;font-size:20px;font-weight:700;color:#fff;text-align:center;font-family:inherit;letter-spacing:.2em;outline:none;margin-bottom:12px;transition:border-color .2s}
+.pw-input:focus{border-color:#2563eb}
+.pw-input.error{border-color:#f87171;animation:shake .3s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.pw-error{font-size:12px;color:#f87171;margin-bottom:12px;min-height:18px}
+.pw-hint{font-size:11px;color:#4b5563;margin-top:16px}
+</style>
+
+<div id="game">
+
+<div id="s-title" class="screen active">
+  <div class="title-eyebrow">MetaMoney Campus</div>
+  <div class="title-main">1500円生活<br>チャレンジ！</div>
+  <div class="title-sub">限られた予算で8つのシーンをクリアせよ</div>
+  <div class="title-rule">
+    <h3>RULES</h3>
+    <div class="rule-row"><div class="rule-icon">💰</div>所持金は1500円。これだけ！</div>
+    <div class="rule-row"><div class="rule-icon">🎯</div>6つのミッション＋2回のハプニングをこなそう</div>
+    <div class="rule-row"><div class="rule-icon">⚡</div>突発イベントで予算が変わるかも…</div>
+    <div class="rule-row"><div class="rule-icon">🏆</div>残金＋クリアポイントで最終スコアが決まる！</div>
+  </div>
+  <button class="btn-primary" onclick="startGame()">ゲームスタート！</button>
+</div>
+
+<div id="hud" style="display:none">
+  <div class="hud-left">
+    <span class="logo">MetaMoney Campus</span>
+    <span class="phase-badge" id="hud-phase">ミッション①</span>
+  </div>
+  <div class="hud-right">
+    <div class="pt-box"><span class="pt-label">POINT</span><span class="pt-val" id="hud-pt">0 pt</span></div>
+    <div class="budget-box"><span class="budget-label">残り予算</span><span class="budget-val" id="hud-budget">¥1,500</span></div>
+  </div>
+</div>
+<div id="progress-bar" class="progress-bar" style="display:none">
+  <div class="prog-step active" id="ps1"></div>
+  <div class="prog-step" id="ps2"></div>
+  <div class="prog-step" id="ps3"></div>
+  <div class="prog-step" id="ps4"></div>
+  <div class="prog-step" id="ps5"></div>
+  <div class="prog-step" id="ps6"></div>
+</div>
+
+<div id="s-m1" class="screen">
+  <div class="mission-header"><div class="mission-tag">MISSION 01 / 06</div><div class="mission-title">今日のお昼ご飯を買おう！</div><div class="mission-desc">コンビニで好きなものを選んで。複数選べるよ！</div></div>
+  <div id="fb-m1" class="feedback-bar"></div>
+  <div class="shop-grid" id="grid-m1"></div>
+  <div class="cart-area"><div class="cart-title">カート</div><div id="cart-m1-rows"></div><div class="cart-total-row"><span>合計</span><span id="cart-m1-total">¥0</span></div><div class="remaining" id="cart-m1-rem">残り ¥1,500</div></div>
+  <div class="action-bar"><button class="btn-skip" onclick="skipM(1,'m2',20,'お昼ご飯')">今回はパス</button><button class="btn-action" id="btn-m1" onclick="confirmM('m1','m2',100,'お昼ご飯')" disabled>これで決定！</button></div>
+</div>
+
+<div id="s-m2" class="screen">
+  <div class="mission-header"><div class="mission-tag">MISSION 02 / 06</div><div class="mission-title">友達への誕生日プレゼントを買おう！</div><div class="mission-desc">ひとつだけ選んでね。予算は500円以内！</div></div>
+  <div id="fb-m2" class="feedback-bar"></div>
+  <div class="shop-grid" id="grid-m2"></div>
+  <div class="cart-area"><div class="cart-title">カート</div><div id="cart-m2-rows"></div><div class="cart-total-row"><span>合計</span><span id="cart-m2-total">¥0</span></div><div class="remaining" id="cart-m2-rem">残り ¥1,500</div></div>
+  <div class="action-bar"><button class="btn-skip" onclick="skipM(2,'ev1',0,'プレゼント')">プレゼントなしにする</button><button class="btn-action" id="btn-m2" onclick="confirmM('m2','ev1',80,'プレゼント')" disabled>これを贈る！</button></div>
+</div>
+
+<div id="s-ev1" class="screen event-screen">
+  <div class="event-card"><div class="event-alert">⚡ ハプニング発生！①</div><div class="event-title" id="ev1-title"></div><div class="event-msg" id="ev1-msg"></div><div class="event-budget" id="ev1-budget"></div><div class="choice-grid" id="ev1-choices"></div></div>
+</div>
+
+<div id="s-m3" class="screen">
+  <div class="mission-header"><div class="mission-tag">MISSION 03 / 06</div><div class="mission-title">帰りの交通手段を選ぼう！</div><div class="mission-desc">家まで帰るための移動方法を選んでね。</div></div>
+  <div id="fb-m3" class="feedback-bar"></div>
+  <div class="shop-grid" id="grid-m3"></div>
+  <div class="cart-area"><div class="cart-title">カート</div><div id="cart-m3-rows"></div><div class="cart-total-row"><span>合計</span><span id="cart-m3-total">¥0</span></div><div class="remaining" id="cart-m3-rem">残り ¥1,500</div></div>
+  <div class="action-bar"><button class="btn-action" id="btn-m3" onclick="confirmM('m3','m4',70,'交通費')" disabled>これで帰る！</button></div>
+</div>
+
+<div id="s-m4" class="screen">
+  <div class="mission-header"><div class="mission-tag">MISSION 04 / 06</div><div class="mission-title">放課後のおやつタイム！</div><div class="mission-desc">おやつを買う？それとも我慢して残しておく？</div></div>
+  <div id="fb-m4" class="feedback-bar"></div>
+  <div class="shop-grid" id="grid-m4"></div>
+  <div class="cart-area"><div class="cart-title">カート</div><div id="cart-m4-rows"></div><div class="cart-total-row"><span>合計</span><span id="cart-m4-total">¥0</span></div><div class="remaining" id="cart-m4-rem">残り ¥1,500</div></div>
+  <div class="action-bar"><button class="btn-skip" onclick="skipM(4,'m5',40,'おやつ')">我慢する（+40pt）</button><button class="btn-action" id="btn-m4" onclick="confirmM('m4','m5',50,'おやつ')" disabled>買う！</button></div>
+</div>
+
+<div id="s-m5" class="screen">
+  <div class="mission-header"><div class="mission-tag">MISSION 05 / 06</div><div class="mission-title">文房具が必要！どれを買う？</div><div class="mission-desc">来週の授業で使う文房具を選んでね。ひとつだけ！</div></div>
+  <div id="fb-m5" class="feedback-bar"></div>
+  <div class="shop-grid" id="grid-m5"></div>
+  <div class="cart-area"><div class="cart-title">カート</div><div id="cart-m5-rows"></div><div class="cart-total-row"><span>合計</span><span id="cart-m5-total">¥0</span></div><div class="remaining" id="cart-m5-rem">残り ¥1,500</div></div>
+  <div class="action-bar"><button class="btn-skip" onclick="skipM(5,'ev2',20,'文房具')">今は買わない</button><button class="btn-action" id="btn-m5" onclick="confirmM('m5','ev2',70,'文房具')" disabled>これにする！</button></div>
+</div>
+
+<div id="s-ev2" class="screen event-screen">
+  <div class="event-card"><div class="event-alert">⚡ ハプニング発生！②</div><div class="event-title" id="ev2-title"></div><div class="event-msg" id="ev2-msg"></div><div class="event-budget" id="ev2-budget"></div><div class="choice-grid" id="ev2-choices"></div></div>
+</div>
+
+<div id="s-m6" class="screen">
+  <div class="mission-header"><div class="mission-tag">MISSION 06 / 06</div><div class="mission-title">今夜の夕食の食材を買おう！</div><div class="mission-desc">残り予算で夕飯の食材を選んで。複数選べるよ！</div></div>
+  <div id="fb-m6" class="feedback-bar"></div>
+  <div class="shop-grid" id="grid-m6"></div>
+  <div class="cart-area"><div class="cart-title">カート</div><div id="cart-m6-rows"></div><div class="cart-total-row"><span>合計</span><span id="cart-m6-total">¥0</span></div><div class="remaining" id="cart-m6-rem">残り ¥1,500</div></div>
+  <div class="action-bar"><button class="btn-skip" onclick="skipM(6,'result',30,'夕食の食材')">今日は外食する</button><button class="btn-action" id="btn-m6" onclick="confirmM('m6','result',100,'夕食の食材')" disabled>これで決定！</button></div>
+</div>
+
+<div id="s-result" class="screen">
+  <div class="result-inner">
+    <div class="result-eyebrow">GAME CLEAR</div>
+    <div class="result-title">結果発表！</div>
+    <div class="score-box">
+      <div class="score-grid">
+        <div class="score-item"><div class="score-label">残り予算</div><div class="score-num score-green" id="res-budget">¥0</div></div>
+        <div class="score-item"><div class="score-label">獲得ポイント</div><div class="score-num score-purple" id="res-pt">0 pt</div></div>
+      </div>
+      <div class="grade-area"><div class="grade-letter" id="res-grade">B</div><div class="grade-msg" id="res-msg"></div></div>
+    </div>
+    <div class="choices-log"><h4>今日の選択ログ</h4><div id="log-rows"></div></div>
+    <div class="think-box"><div class="think-title">考えてみよう</div><div class="think-text" id="think-text"></div></div>
+    <button class="btn-primary" onclick="resetGame()" style="width:100%">もう一度チャレンジ！</button>
+  </div>
+</div>
+
+<div id="s-password" class="screen">
+  <div class="pw-card">
+    <div class="pw-lock">🔒</div>
+    <div class="pw-title" id="pw-title">次のミッションへ進む</div>
+    <div class="pw-desc" id="pw-desc">先生の合図を待って、パスワードを入力してね！</div>
+    <input class="pw-input" id="pw-input" type="password" maxlength="8" placeholder="••••"
+      oninput="this.value=this.value.toUpperCase()"
+      onkeydown="if(event.key==='Enter')checkPassword()">
+    <div class="pw-error" id="pw-error"></div>
+    <button class="btn-action" onclick="checkPassword()" style="width:100%">進む →</button>
+    <div class="pw-hint">※ パスワードは先生から教えてもらおう</div>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ========== パスワード設定 ==========
+const PASSWORDS = {
+  m2:     'LUNCH',  // ミッション①→②
+  ev1:    'GIFT',   // ミッション②→ハプニング①
+  m3:     'EVENT1', // ハプニング①→③
+  m4:     'BUS',    // ③→④
+  m5:     'SNACK',  // ④→⑤
+  ev2:    'PEN',    // ⑤→ハプニング②
+  m6:     'EVENT2', // ハプニング②→⑥
+  result: 'DONE',   // ⑥→結果
+};
+// ====================================
+
+const ITEMS = {
+  m1:[
+    {id:'rice1',emoji:'🍙',name:'おにぎり（鮭）',price:180},
+    {id:'rice2',emoji:'🍙',name:'おにぎり（梅）',price:130},
+    {id:'sand',emoji:'🥪',name:'サンドイッチ（BLT）',price:290},
+    {id:'bento',emoji:'🍱',name:'幕の内弁当',price:480},
+    {id:'udon',emoji:'🍜',name:'カップうどん',price:160},
+    {id:'tea',emoji:'🍵',name:'お茶（500ml）',price:150},
+    {id:'coffee',emoji:'☕',name:'コーヒー',price:170},
+    {id:'juice',emoji:'🧃',name:'オレンジジュース',price:160},
+    {id:'snack',emoji:'🍪',name:'クッキー（3枚入）',price:120},
+  ],
+  m2:[
+    {id:'choco',emoji:'🍫',name:'チョコレート菓子',price:230},
+    {id:'memo',emoji:'📓',name:'メモ帳セット',price:280},
+    {id:'card',emoji:'💌',name:'ポストカード',price:100},
+    {id:'badge',emoji:'📛',name:'缶バッジ',price:150},
+    {id:'cream',emoji:'🧴',name:'ハンドクリーム',price:320},
+    {id:'candy',emoji:'🍬',name:'キャンディーBOX',price:400},
+    {id:'book',emoji:'📚',name:'小さな絵本',price:480},
+  ],
+  m3:[
+    {id:'bike',emoji:'🚲',name:'自転車で帰る（無料）',price:0},
+    {id:'train',emoji:'🚃',name:'電車（片道）',price:180},
+    {id:'bus',emoji:'🚌',name:'バス（片道）',price:230},
+    {id:'taxi',emoji:'🚕',name:'タクシー',price:800},
+  ],
+  m4:[
+    {id:'chip',emoji:'🥨',name:'スナック菓子',price:150},
+    {id:'pudding',emoji:'🍮',name:'プリン',price:180},
+    {id:'icecream',emoji:'🍦',name:'アイス',price:200},
+    {id:'choco2',emoji:'🍫',name:'板チョコ',price:120},
+    {id:'crepe',emoji:'🥞',name:'クレープ',price:350},
+    {id:'cake',emoji:'🧁',name:'カップケーキ',price:280},
+  ],
+  m5:[
+    {id:'pen',emoji:'✏️',name:'シャープペン',price:150},
+    {id:'note',emoji:'📒',name:'ノート（B5）',price:200},
+    {id:'ruler',emoji:'📏',name:'定規セット',price:250},
+    {id:'pens',emoji:'🖊️',name:'カラーペンセット',price:480},
+    {id:'file',emoji:'📁',name:'クリアファイル（5枚）',price:180},
+  ],
+  m6:[
+    {id:'egg',emoji:'🥚',name:'卵（6個入り）',price:200},
+    {id:'bread',emoji:'🍞',name:'食パン（1斤）',price:180},
+    {id:'pasta',emoji:'🍝',name:'パスタ＋ソース',price:320},
+    {id:'curry',emoji:'🍛',name:'カレールー＋野菜',price:450},
+    {id:'noodle',emoji:'🍜',name:'袋ラーメン（3食）',price:280},
+    {id:'tofu',emoji:'🫘',name:'豆腐＋みそ',price:160},
+    {id:'salad',emoji:'🥗',name:'サラダキット',price:230},
+    {id:'gyoza',emoji:'🥟',name:'餃子（冷凍）',price:380},
+  ],
+};
+
+const SINGLE = {m1:false, m2:true, m3:true, m4:true, m5:true, m6:false};
+const BUDGET_CAP = {m2:500};
+
+const EVENTS_DATA = {
+  ev1:[
+    {title:'急に雨が降ってきた！',msg:'傘を持っていなかった。コンビニのビニール傘は¥600。どうする？',choices:[
+      {label:'傘を買う（¥600）',effect:'−¥600',cost:600,pt:-20,fb:'濡れずに帰れた！でも予算が大きく減ったよ。'},
+      {label:'雨が弱まるまで待つ',effect:'お金は減らない',cost:0,pt:15,fb:'節約成功！時間はかかったけど賢い選択。'},
+      {label:'友達に傘を借りる',effect:'お金は減らない',cost:0,pt:25,fb:'ナイス！お金を使わずに解決できたね。'},
+    ]},
+    {title:'友達がお金なくて困ってる…',msg:'「電車賃が足りない〜」って友達が言ってきた。どうする？',choices:[
+      {label:'¥200貸してあげる',effect:'−¥200',cost:200,pt:-10,fb:'やさしい！でも返ってこないかもしれないよ？'},
+      {label:'一緒に歩いて帰る',effect:'お金は減らない',cost:0,pt:20,fb:'一石二鳥！節約できて運動にもなったね。'},
+      {label:'断る（予算を守る）',effect:'残高キープ',cost:0,pt:10,fb:'正直に断るのも立派な選択。お金の管理は大切！'},
+    ]},
+  ],
+  ev2:[
+    {title:'推しグッズ限定販売！',msg:'帰り道のお店で、大好きな推しの限定グッズを発見！¥450。どうする？',choices:[
+      {label:'買う！（¥450）',effect:'−¥450',cost:450,pt:-20,fb:'推しへの愛はプライスレス…でも予算は減ったよ！'},
+      {label:'今回は我慢する',effect:'残高キープ',cost:0,pt:30,fb:'すばらしい！「欲しい」より「必要」を優先できた！'},
+      {label:'写真だけ撮って帰る',effect:'お金は減らない',cost:0,pt:20,fb:'クリエイティブな解決策！記念にはなるね。'},
+    ]},
+    {title:'ゲームアプリが課金を求めてる！',msg:'好きなゲームのアイテムが期間限定で¥500。どうする？',choices:[
+      {label:'課金する（¥500）',effect:'−¥500',cost:500,pt:-25,fb:'ゲームは楽しめたかも！でも食費を考えると…'},
+      {label:'無課金でがんばる',effect:'残高キープ',cost:0,pt:30,fb:'えらい！課金しなくても楽しめる工夫が大事だね。'},
+      {label:'親に相談する',effect:'お金は減らない',cost:0,pt:20,fb:'大人に相談できるのは素晴らしいこと！'},
+    ]},
+  ],
+};
+
+const PHASE_NAMES = {m1:'ミッション①',m2:'ミッション②',m3:'ミッション③',m4:'ミッション④',m5:'ミッション⑤',m6:'ミッション⑥',ev1:'⚡ ハプニング①',ev2:'⚡ ハプニング②',result:'結果！'};
+const STEP_IDX = {m1:0,m2:1,m3:2,m4:3,m5:4,m6:5};
+
+let state = {};
+let pendingAction = null;
+
+function initState(){
+  state = {
+    budget:1500, points:0,
+    selected:{m1:[],m2:[],m3:[],m4:[],m5:[],m6:[]},
+    log:[],
+    evIdx:{ev1:Math.floor(Math.random()*2), ev2:Math.floor(Math.random()*2)},
+  };
+}
+
+function fmt(n){return '¥'+n.toLocaleString();}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function updateHUD(){
+  const b=document.getElementById('hud-budget');
+  b.textContent=fmt(state.budget);
+  b.className='budget-val'+(state.budget<=300?' danger':state.budget<=600?' warn':'');
+  document.getElementById('hud-pt').textContent=state.points+' pt';
+}
+
+function updateProgress(mid){
+  const idx=STEP_IDX[mid]??-1;
+  for(let i=1;i<=6;i++){
+    const el=document.getElementById('ps'+i);
+    if(!el) continue;
+    el.className='prog-step'+(i-1<idx?'done':i-1===idx?'active':'').trim()||'prog-step';
+    if(i-1<idx) el.className='prog-step done';
+    else if(i-1===idx) el.className='prog-step active';
+    else el.className='prog-step';
+  }
+}
+
+function startGame(){
+  initState();
+  document.getElementById('hud').style.display='flex';
+  document.getElementById('progress-bar').style.display='flex';
+  document.getElementById('s-title').style.display='none';
+  updateHUD(); updateProgress('m1'); setPhase('ミッション①');
+  buildGrid('m1'); showScreen('s-m1');
+}
+
+function buildGrid(mid){
+  const cap=BUDGET_CAP[mid]?Math.min(state.budget,BUDGET_CAP[mid]):state.budget;
+  const grid=document.getElementById('grid-'+mid);
+  grid.innerHTML='';
+  ITEMS[mid].forEach(item=>{
+    const isOver=item.price>cap;
+    const d=document.createElement('div');
+    d.className='item-card'+(isOver?' disabled':'');
+    d.id='card-'+item.id;
+    d.innerHTML=`<div class="item-emoji">${item.emoji}</div><div class="item-name">${item.name}</div><div class="item-price">${item.price===0?'無料':fmt(item.price)}</div>${isOver?'<div class="item-over">予算オーバー</div>':''}`;
+    if(!isOver) d.onclick=()=>toggleItem(mid,item);
+    grid.appendChild(d);
+  });
+  updateCart(mid);
+}
+
+function toggleItem(mid,item){
+  const cap=BUDGET_CAP[mid]?Math.min(state.budget,BUDGET_CAP[mid]):state.budget;
+  const sel=state.selected[mid];
+  const idx=sel.findIndex(i=>i.id===item.id);
+  if(idx>=0){sel.splice(idx,1);}
+  else{
+    if(SINGLE[mid]) sel.length=0;
+    const total=sel.reduce((a,i)=>a+i.price,0);
+    if(total+item.price>cap){flashFb(mid,'予算オーバー！合計が'+fmt(cap)+'を超えてしまいます');return;}
+    sel.push(item);
+  }
+  document.querySelectorAll('#grid-'+mid+' .item-card').forEach(c=>{
+    const it=ITEMS[mid].find(i=>'card-'+i.id===c.id);
+    if(it&&!c.classList.contains('disabled'))
+      c.className='item-card'+(sel.find(s=>s.id===it.id)?' selected':'');
+  });
+  updateCart(mid);
+}
+
+function updateCart(mid){
+  const sel=state.selected[mid];
+  document.getElementById('cart-'+mid+'-rows').innerHTML=
+    sel.length===0?'<div style="font-size:12px;color:#4b5563;padding:4px 0">まだ選択されていません</div>':
+    sel.map(i=>`<div class="cart-row"><span>${i.emoji} ${i.name}</span><span>${i.price===0?'無料':fmt(i.price)}</span></div>`).join('');
+  const total=sel.reduce((a,i)=>a+i.price,0);
+  document.getElementById('cart-'+mid+'-total').textContent=fmt(total);
+  const remVal=state.budget-total;
+  const remEl=document.getElementById('cart-'+mid+'-rem');
+  remEl.textContent='残り '+fmt(Math.max(0,remVal));
+  remEl.className='remaining'+(remVal<=200?' danger':remVal<=500?' warn':'');
+  const btn=document.getElementById('btn-'+mid);
+  if(btn) btn.disabled=sel.length===0;
+}
+
+function flashFb(mid,msg,isEvent){
+  const fb=document.getElementById('fb-'+mid);
+  if(!fb) return;
+  fb.textContent=msg;
+  fb.className='feedback-bar show'+(isEvent?' event-fb':'');
+  setTimeout(()=>fb.classList.remove('show'),3000);
+}
+
+function confirmM(mid,next,pts,label){
+  const sel=state.selected[mid];
+  if(sel.length===0) return;
+  const total=sel.reduce((a,i)=>a+i.price,0);
+  state.budget-=total; state.points+=pts;
+  state.log.push({label,detail:sel.map(i=>i.name).join('・'),cost:total});
+  updateHUD(); goNext(mid,next);
+}
+
+function skipM(n,next,pts,label){
+  state.points+=pts;
+  state.log.push({label,detail:'パス',cost:0});
+  goNext('m'+n,next);
+}
+
+function goNext(fromMid,next){
+  if(next==='result'){
+    showPassword('結果発表へ進む','先生の合図を待って、パスワードを入力してね！','result',()=>showResult());
+    return;
+  }
+  if(next.startsWith('ev')){
+    showPassword('次のステージへ進む','先生の合図を待って、パスワードを入力してね！',next,()=>showEventScreen(next));
+    return;
+  }
+  showPassword(PHASE_NAMES[next]+'へ進む','先生の合図を待って、パスワードを入力してね！',next,()=>{
+    setPhase(PHASE_NAMES[next]); updateProgress(next); buildGrid(next); showScreen('s-'+next);
+  });
+}
+
+function showEventScreen(evId){
+  setPhase(PHASE_NAMES[evId]);
+  const ev=EVENTS_DATA[evId][state.evIdx[evId]];
+  document.getElementById(evId+'-title').textContent=ev.title;
+  document.getElementById(evId+'-msg').textContent=ev.msg;
+  document.getElementById(evId+'-budget').textContent='現在の残り予算：'+fmt(state.budget);
+  const cg=document.getElementById(evId+'-choices');
+  cg.innerHTML='';
+  const nextMid=evId==='ev1'?'m3':'m6';
+  ev.choices.forEach(c=>{
+    const b=document.createElement('button');
+    b.className='choice-btn';
+    b.innerHTML=`<div class="choice-label">${c.label}</div><div class="choice-effect">${c.effect}</div>`;
+    b.onclick=()=>chooseEvent(c,evId,nextMid);
+    cg.appendChild(b);
+  });
+  showScreen('s-'+evId);
+}
+
+function chooseEvent(c,evId,nextMid){
+  if(state.budget-c.cost<0){alert('残高が足りません！');return;}
+  state.budget-=c.cost; state.points+=c.pt;
+  state.log.push({label:'ハプニング対応',detail:c.label,cost:c.cost});
+  updateHUD();
+  const fbMsg=c.fb;
+  showPassword(PHASE_NAMES[nextMid]+'へ進む','先生の合図を待って、パスワードを入力してね！',nextMid,()=>{
+    setPhase(PHASE_NAMES[nextMid]); updateProgress(nextMid); buildGrid(nextMid);
+    const fb=document.getElementById('fb-'+nextMid);
+    if(fb){fb.textContent='⚡ ハプニング結果：'+fbMsg;fb.className='feedback-bar show event-fb';setTimeout(()=>fb.classList.remove('show'),4000);}
+    showScreen('s-'+nextMid);
+  });
+}
+
+function showResult(){
+  setPhase('結果！');
+  const rem=state.budget;
+  state.points+=Math.floor(rem/10);
+  document.getElementById('res-budget').textContent=fmt(rem);
+  document.getElementById('res-pt').textContent=state.points+' pt';
+  const gradeEl=document.getElementById('res-grade');
+  const msgEl=document.getElementById('res-msg');
+  let grade,msg,think;
+  if(state.points>=500){grade='S';gradeEl.style.color='#fbbf24';msg='完璧なやりくり！予算管理の達人です。';think='今日は「必要なもの」と「欲しいもの」をしっかり分けて考えられたね。この感覚、現実の買い物でも使えるよ！';}
+  else if(state.points>=360){grade='A';gradeEl.style.color='#34d399';msg='すばらしい！バランスの取れた選択でした。';think='予算を意識しながら選べたね。ハプニングへの対応も◎。次は残高をもっと残せるか挑戦してみよう！';}
+  else if(state.points>=220){grade='B';gradeEl.style.color='#60a5fa';msg='良い判断でした！もう少しで上のランクも見えてくる。';think='選択のたびに「これは本当に必要？」を考えると、次回はもっと上を狙えるよ。';}
+  else{grade='C';gradeEl.style.color='#f87171';msg='チャレンジお疲れさま！次回は予算管理を意識してみよう。';think='予算が少なくなると焦るよね。でも今日の体験がリアルな生活でのヒントになるよ！';}
+  gradeEl.textContent=grade; msgEl.textContent=msg;
+  document.getElementById('think-text').textContent=think;
+  document.getElementById('log-rows').innerHTML=
+    state.log.map(l=>`<div class="log-row"><span>${l.label}：${l.detail}</span><span>${l.cost>0?'−'+fmt(l.cost):'¥0'}</span></div>`).join('');
+  showScreen('s-result');
+}
+
+function setPhase(txt){document.getElementById('hud-phase').textContent=txt;}
+
+function resetGame(){
+  document.getElementById('hud').style.display='none';
+  document.getElementById('progress-bar').style.display='none';
+  document.getElementById('s-title').style.display='';
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s-title').classList.add('active');
+}
+
+function showPassword(title,desc,pwKey,fn){
+  pendingAction={pw:PASSWORDS[pwKey],fn};
+  document.getElementById('pw-title').textContent=title;
+  document.getElementById('pw-desc').textContent=desc;
+  document.getElementById('pw-input').value='';
+  document.getElementById('pw-error').textContent='';
+  document.getElementById('pw-input').className='pw-input';
+  showScreen('s-password');
+  setTimeout(()=>document.getElementById('pw-input').focus(),100);
+}
+
+function checkPassword(){
+  const val=document.getElementById('pw-input').value.toUpperCase().trim();
+  const input=document.getElementById('pw-input');
+  if(pendingAction&&val===pendingAction.pw){
+    document.getElementById('pw-error').textContent='';
+    pendingAction.fn(); pendingAction=null;
+  } else {
+    input.className='pw-input error';
+    document.getElementById('pw-error').textContent='パスワードが違います。もう一度試してね！';
+    document.getElementById('pw-input').value='';
+    setTimeout(()=>{input.className='pw-input';},400);
+  }
+}
+</script>
